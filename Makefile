@@ -1,6 +1,8 @@
 MS_PORT ?= /dev/ttyUSB0
 BUILDER_NAME ?= ms4000-builder
 
+MS4_PYTHON := $(shell which python3)
+
 builder: 
 	docker build -t $(BUILDER_NAME) .
 
@@ -16,5 +18,16 @@ tools:
 factory:
 	make -C tools/factoryFlashing
 
+install-python-venv:
+	sudo apt install python3-venv
+
+new-python-environment:
+	rm -rf .venv_firmware
+	$(MS4_PYTHON) -m venv .venv_firmware
+	echo "please run: . .venv_firmware/bin/activate"
+
+python-requirements:
+	@echo "Python in-use is: $(MS4_PYTHON)"
+	$(MS4_PYTHON) -m pip install -r firmware/requirements.txt
 
 .PHONY: tools

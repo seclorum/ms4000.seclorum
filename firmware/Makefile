@@ -35,7 +35,6 @@ pio-deps:
 	@echo "NOTE: installing platform dependencies with PlatformIO"
 	pio lib install 222 64 423 35 568 170 567 4271
 
-
 build:
 	platformio run --upload-port ${MS4_PORT}
 
@@ -72,17 +71,6 @@ pio-deps-clean:
 
 test:    proto build flash monitor
 
-python-venv:
-	sudo apt install python3-venv
-
-python-environment:
-	rm -rf .venv_firmware
-	$(MS4_PYTHON) -m venv .venv_firmware
-	echo "please run: . .venv_firmware/bin/activate"
-
-python-requirements:
-	@echo "Python in-use is: $(MS4_PYTHON)"
-	$(MS4_PYTHON) -m pip install -r requirements.txt
 
 # note: there is one single source for the shared MS4.proto file - at the root of the repo!
 proto:  proto-clean ../MS4.proto 
