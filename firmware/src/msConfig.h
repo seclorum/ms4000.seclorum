@@ -7,6 +7,8 @@
 
 #undef DEBUG_OUTPUT
 
+#undef MS_TEST_LITTLEFS
+
 // MIDI and OSC enabled?
 // #define CONFIG_ENABLE_OSC
 

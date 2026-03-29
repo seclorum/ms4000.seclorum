@@ -935,11 +935,12 @@ void showBatteryStatus(bool shouldFadeIn) {
 
 	}
 
-// NOTE: this is being left in for future testing of LittleFS .. 
+#ifdef MS_TEST_LITTLEFS
+	// NOTE: this is being left in for future testing of LittleFS .. 
 	void TEST_LittleFS_bug()
 	{
 
-		const char* debugPath = "XXXXX";
+		const char* debugPath = "testLFSx";
 		uint8_t testVals[] = {1,23, 3, 7};
 		uint8_t readBuffer[] = {0,0,0,0};
     //File file = LittleFS.open((char *)debugPath.c_str(), "w");
@@ -974,7 +975,7 @@ void showBatteryStatus(bool shouldFadeIn) {
 		slogln("readback: ");
 		slogln(String(readBuffer[1]));
 	};
-
+#endif
 
 	// gets the basic stuff set up
 	void setup() {
@@ -1012,7 +1013,9 @@ void showBatteryStatus(bool shouldFadeIn) {
 			slog("Restart to try again");
 		}
 
+#ifdef MS_TEST_LITTLEFS
 		TEST_LittleFS_bug();
+#endif
 
 		Settings.getUIConfig(&msGlobals.ui);
 
