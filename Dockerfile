@@ -24,7 +24,7 @@ RUN cd firmware/ && \
     platformio run
 
 # build webapp
-RUN cd web/app && make
+RUN cd web/app && make deps && make
 
 # clean working directory
 RUN rm -rf ./*

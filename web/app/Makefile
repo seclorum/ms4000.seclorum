@@ -7,4 +7,4 @@ proto:
 build:
 	npm run build && ls -alF build/
 
-all:	deps proto build
+all:	proto build
