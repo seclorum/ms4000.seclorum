@@ -17,14 +17,17 @@ tools:
 
 factory:
 	make -C tools/factoryFlashing
-
+#
+# Note! The Dockerfile will use its own internal python - however, for development
+# please create and use your own local python .venv with these targets:
+#
 install-python-venv:
 	sudo apt install python3-venv
 
 new-python-environment:
 	rm -rf .venv_firmware
 	$(MS4_PYTHON) -m venv .venv_firmware
-	echo "please run: . .venv_firmware/bin/activate"
+	echo "IMPORTANT: please run . .venv_firmware/bin/activate to use the MS4000-local python environment!"
 
 python-requirements:
 	@echo "Python in-use is: $(MS4_PYTHON)"
