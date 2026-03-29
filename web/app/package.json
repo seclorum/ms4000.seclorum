@@ -41,8 +41,8 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "testServer": "./node_modules/.bin/babel-node src/testServer/index.js",
-    "proto": "mkdir -p ../../MS3000-WebInterface/ms3000-app/src/proto-generated; make -C ../../MS3000-Firmware/MS3KOS/ proto",
-    "protoDepr": "cp ../../MS3000.proto ./public",
+    "proto": "make -C ../../firmware/ proto",
+    "protoDepr": "cp ../../MS4.proto ./public",
     "loc": "find ./src -name '*.*' | xargs wc -l"
   }
 }

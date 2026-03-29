@@ -1,2 +1,2 @@
 all:
-	cp -fvp ../../MS3000.proto public/MS3000.proto
+	cp -fvp ../../MS4.proto public/MS4.proto
