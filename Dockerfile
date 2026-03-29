@@ -2,11 +2,11 @@
 # Author: (mon7gomery)
 
 FROM debian:stable-20260316-slim
-WORKDIR /usr/local/ms3000-builder
+WORKDIR /usr/local/ms4000-builder
 
 # install dependencies
 RUN apt update
-RUN apt install -y --no-install-recommends --no-install-suggests make git python3 python3-setuptools python3-pip protobuf-compiler npm
+RUN apt install -y --no-install-recommends --no-install-suggests make git python3 python3-setuptools python3-pip protobuf-compiler npm build-essential
 
 # copy current worktree to docker image
 COPY ./ ./
@@ -23,6 +23,6 @@ RUN cd firmware/ && \
     make proto && \
     platformio run
 
-#RUN rm -rf ./*
-RUN ls -alF
+# clean working directory
+RUN rm -rf ./*
 
