@@ -50,7 +50,7 @@ static bool streamFile(String path)
 		File file = LittleFS.open((char *) path.c_str(), "r");
 		msSystem.msESPServer.streamFile(file, contentType);
 		file.close();
-		msSystem.slogln("sent file" + path);
+		msSystem.slogln("sent file:[" + path + "]");
 		return true;
 	} else {
 		msSystem.slogln("streamFile fail:" + path);

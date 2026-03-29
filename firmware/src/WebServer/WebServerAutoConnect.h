@@ -171,7 +171,7 @@ bool TrySoftAP(struct APAuth & apInfo)
 	msSystem.slogln("wifi: configuring access point: "+ String(apInfo.ssid));
 	msSystem.slogln("wifi: password: " + String(apInfo.password));
 
-	WiFi.mode(WIFI_AP_STA);
+	msSystem.slogln("wifi: init: " + String(WiFi.mode(WIFI_AP_STA)));
 
 //  WiFi.softAPConfig(IPAddress(10,20,30,40), IPAddress(10,1,1,1), IPAddress(255, 255, 255, 0));
 	if (strlen(apInfo.password) == 0) {
@@ -180,7 +180,7 @@ bool TrySoftAP(struct APAuth & apInfo)
 		WiFi.softAP(apInfo.ssid, apInfo.password);
 	}
 
-	msSystem.slogln("wifi: accesspoints: " + String(apInfo.ssid));
+	msSystem.slogln("wifi: our access point is named: " + String(apInfo.ssid));
 
 	printIPInfo();
 
