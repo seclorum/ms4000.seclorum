@@ -1,10 +1,11 @@
-deps:
-	npm i
+.PHONY:	build
 
-proto:
-	cp -fvp ../../MS4.proto public/MS4.proto
+all:	build
 
 build:
+	cp -fvp ../../MS4.proto public/MS4.proto
 	npm run build && ls -alF build/
 
-all:	proto build
+deps:
+	npm i
+ 
