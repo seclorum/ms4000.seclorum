@@ -46,7 +46,7 @@ builder-test:
 
 
 reqs-debian:	install-python-venv new-python-environment python-requirements
-	-apt install -y docker.io docker-compose docker-buildx
+	-apt install -y docker.io docker-compose docker-buildx protobuf-compiler
  
 tools:
 	which pio; \
