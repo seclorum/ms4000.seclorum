@@ -78,7 +78,7 @@ activate:
 
 .PHONY: tools
 
-all:	python-tooling tools builder factory
+all:	tools builder factory
 
 clean:
 	make -C firmware/ clean proto-clean
