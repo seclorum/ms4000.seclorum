@@ -53,5 +53,5 @@ python-tooling:	new-python-environment activate python-requirements
 all:	python-tooling tools builder factory
 
 clean:
-	make -C firmware proto-clean clean
+	make -C firmware/ clean proto-clean
 	make -C web/app clean

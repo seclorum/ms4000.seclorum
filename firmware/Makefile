@@ -93,5 +93,5 @@ activate:
 	. ../.venv_ms4000/bin/activate
 
 clean:
-	pio run -t clean
+	-pio run -t clean
 
