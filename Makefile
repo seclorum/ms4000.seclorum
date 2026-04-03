@@ -12,11 +12,11 @@ builder-burn:
 builder-shell:
 	docker run -it --device /dev/ttyUSB0 -v $(shell pwd):/usr/local/ms4000-builder $(BUILDER_NAME) /bin/bash
 
-reqs-debian:
-	apt install -y docker.io docker-compose 
+reqs-debian:	install-python-venv new-python-environment python-requirements
+	sudo apt install -y docker.io docker-compose 
  
 tools:
-	. .venv_firmware/bin/activate && (\
+	(\
 		which pio; \
 		make -C tools/esptool-ck\
 	)
@@ -31,18 +31,18 @@ install-python-venv:
 	sudo apt install -y python3-venv
 
 new-python-environment:
-	rm -rf .venv_firmware
-	$(MS4_PYTHON) -m venv .venv_firmware
-	echo "IMPORTANT: please run . .venv_firmware/bin/activate to use the MS4000-local python environment!"
+	rm -rf .venv_ms4000
+	$(MS4_PYTHON) -m venv .venv_ms4000
+	echo "IMPORTANT: please run . .venv_ms4000/bin/activate to use the MS4000-local python environment!"
 
 python-requirements:
-	. .venv_firmware/bin/activate && ( \
+	( \
 		@echo "Python in-use is: $(MS4_PYTHON)"; \
 		$(MS4_PYTHON) -m pip install -r firmware/requirements.txt;\
 	)
 
 activate:
-	. .venv_firmware/bin/activate && (\
+	. .venv_ms4000/bin/activate && (\
 		which pio \
 	)
 

@@ -77,6 +77,14 @@ Linux is great, but we also take care to make sure we can also still use MacOS t
 
 	In this current directory, type: `make factory`
 
+## Docker Group
+
+To use the docker builder, you must be a member of the docker group, i.e. "usermod -aG docker <yourUserID>"
+
+## Python Environment
+
+For local tooling and development, there is a python-tooling target which will set up the python venv - which must be activated, i.e. ". .venv_ms4000/bin/activate" .. for firmware tooling, etc.
+
 ## Debugging Monitor:
 
 	make -C firmware monitor
