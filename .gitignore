@@ -37,6 +37,7 @@
 **/node_modules/**
 **/.venv/*
 **/.venv_firmware/*
+**/.venv_ms4000/*
 
 # vim swp
 **/**.swp
