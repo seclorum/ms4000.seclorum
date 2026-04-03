@@ -8,11 +8,13 @@ This is a mono-repo.. This repository contains the Magicshifter OS, built with p
  * [install platformio](http://platformio.org/#!/get-started) - you will need the command-line (pio) tooling, but may have success with the PlatformIO IDE
  * Developers: Edit the firmware in firmware/src, Build the firmware: `cd firmware && make` - see also other targets in firmware/Makefile (i.e. 'make flash', etc.)
  * We are using protocol-buffers to synchronize state between the firmware and the web - the web interface is generated from the protobuf definition, which is included as .h/.c in the firmware.  'make proto' targets abound!
+ * The project requires and uses python3.9 - to set up the required .venv_ms4000 virtual environment you can use the "new-python-environment" Makefile target.
 
 ## Dependencies
  * remember to read the Makefile
  * `make pio-deps` can get you started... don't forget to see the 'copy-libs' target, too: nanopb is generated from our MS4.proto file
  * default make target copies libraries (copy-libs) that are auto-generated from the protobuffer target, into lib/nanopb
+ * At the moment, we use Python 3.9 for tooling dependencies, and ALWAYS use a local .venv_ms4000 virtual environment for local development!
 
 ## Example set up for Ubuntu:
 
@@ -54,7 +56,7 @@ PlatformIO allows us to very easily manage project dependencies and complete ful
 	* MacOS:
 		`brew install platformio` 
 
-	* Linux: Set up venv, install python 3.7 (or so..), then:
+	* Linux: Set up venv, install python 3.9 (or so..), then:
 		`pip install platformio`
 
 ## Device for the MagicShifter
