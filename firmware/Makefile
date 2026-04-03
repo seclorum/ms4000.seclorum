@@ -51,6 +51,7 @@ all: clean copy-libs proto build flash monitor
 # =============================================================================
 # Core Build Targets
 # =============================================================================
+.pio/build/ms4000/firmware.bin:
 build:
 	$(call announce,🔨 [build] Building firmware with PlatformIO...)
 	pio run --upload-port $(MS4_PORT)
