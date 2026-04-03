@@ -1,3 +1,10 @@
+# =============================================================================
+# MS4000 Top-Level Makefile
+# Compatible with CLion Makefile project
+# Colorful announce messages with timestamps and emojis
+# =============================================================================
+
+# Configuration
 MS_PORT ?= /dev/ttyUSB0
 BUILDER_NAME ?= ms4000-builder
 PWD := $(shell pwd)
@@ -7,79 +14,183 @@ GROUP := $(shell id -g)
 SYS_PYTHON := $(shell which python3)
 MS4_PYTHON = .venv_ms4000/bin/python3
 
+# =============================================================================
+# Color and Announce Macros
+# =============================================================================
+RED     = \033[1;31m
+GREEN   = \033[1;32m
+YELLOW  = \033[1;33m
+BLUE    = \033[1;34m
+MAGENTA = \033[1;35m
+CYAN    = \033[1;36m
+WHITE   = \033[1;37m
+RESET   = \033[0m
+
+define announce
+    @echo -e "$(CYAN)[$$(date '+%Y-%m-%d %H:%M:%S')] $(1)$(RESET)"
+endef
+
+define success
+    @echo -e "$(GREEN)[$$(date '+%Y-%m-%d %H:%M:%S')] ✅ SUCCESS: $(1)$(RESET)"
+endef
+
+define warning
+    @echo -e "$(YELLOW)[$$(date '+%Y-%m-%d %H:%M:%S')] ⚠️  $(1)$(RESET)"
+endef
+
+# =============================================================================
+# Default target (important for CLion)
+# =============================================================================
+all: tools builder factory
+	$(call success,MS4000 top-level build completed)
+
+# =============================================================================
+# Docker Builder Targets
+# =============================================================================
 builder:
+	$(call announce,🔨 Building Docker image '$(BUILDER_NAME)'...)
 	docker build -t $(BUILDER_NAME) .
+	$(call success,Docker image '$(BUILDER_NAME)' built successfully)
 
 builder-burn:
-	docker run 	--device /dev/ttyUSB0 \
-			-v $(PWD):/home/builder/workspace \
-			--user $(USER):$(GROUP) \
-                        --group-add dialout \
-                        -e PLATFORMIO_CORE_DIR=/home/builder/.platformio \
-			$(BUILDER_NAME) \
-			sh -c "\
-			make tools \
-			&& cd firmware \
-			&& make clean \
-			&& make proto \
-			&& make \
-			"
+	$(call announce,🔥 Starting Docker build + burn to $(MS_PORT)...)
+	docker run \
+        --device $(MS_PORT) \
+        -v $(PWD):/home/builder/workspace \
+        --user $(USER):$(GROUP) \
+        --group-add dialout \
+        -e PLATFORMIO_CORE_DIR=/home/builder/.platformio \
+        $(BUILDER_NAME) \
+        sh -c "\
+            make tools && \
+            cd firmware && \
+            make clean && \
+            make proto && \
+            make \
+        "
+	$(call success,Firmware built and flashed via Docker)
 
 builder-shell:
-	docker run 	-it \
-			--device /dev/ttyUSB0 \
-			-v $(PWD):/home/builder/workspace \
-			--user $(USER):$(GROUP) \
-			--group-add dialout \
-			-e PLATFORMIO_CORE_DIR=/home/builder/.platformio \
-			$(BUILDER_NAME) \
-			/bin/bash
+	$(call announce,🐚 Starting interactive Docker shell...)
+	docker run -it \
+        --device $(MS_PORT) \
+        -v $(PWD):/home/builder/workspace \
+        --user $(USER):$(GROUP) \
+        --group-add dialout \
+        -e PLATFORMIO_CORE_DIR=/home/builder/.platformio \
+        $(BUILDER_NAME) \
+        /bin/bash
 
-builder-test:
-	docker run 	-it \
-			--device /dev/ttyUSB0 \
-			-v $(PWD):/home/builder/workspace \
-			--user $(USER):$(GROUP) \
-			--group-add dialout \
-			$(BUILDER_NAME) \
-			/bin/bash
+builder-test: builder-shell
+	$(call announce,🧪 builder-test alias used (same as builder-shell))
 
-
-reqs-debian:	install-python-venv new-python-environment python-requirements
+# =============================================================================
+# Local Development Targets
+# =============================================================================
+reqs-debian: install-python-venv new-python-environment python-requirements
+	$(call announce,📦 Installing Debian system requirements...)
 	-apt install -y docker.io docker-compose docker-buildx protobuf-compiler
- 
-tools:
-	which pio; \
-	make -C tools/esptool-ck\
+	$(call success,Debian requirements installed)
 
-factory:
-	make -C tools/factoryFlashing
-#
-# Note! The Dockerfile will use its own internal python - however, for development
-# please create and use your own local python .venv with these targets:
-#
 install-python-venv:
+	$(call announce,🐍 Installing python3-venv...)
 	-apt install -y python3-venv
 
-new-python-environment:	install-python-venv
+new-python-environment: install-python-venv
+	$(call announce,🌱 Creating fresh Python virtual environment...)
 	rm -rf .venv_ms4000
 	$(SYS_PYTHON) -m venv .venv_ms4000
-	echo "IMPORTANT: please run . .venv_ms4000/bin/activate to use the MS4000-local python environment!"
+	$(call success,Virtual environment created at .venv_ms4000)
+	@echo -e "$(YELLOW)IMPORTANT: Run 'source .venv_ms4000/bin/activate' to activate$(RESET)"
 
-$(MS4_PYTHON):	new-python-environment
+$(MS4_PYTHON): new-python-environment
 
 python-requirements: $(MS4_PYTHON)
-	$(MS4_PYTHON) -m pip install -r firmware/requirements.txt;\
+	$(call announce,📥 Installing Python requirements from firmware/requirements.txt...)
+	$(MS4_PYTHON) -m pip install -r firmware/requirements.txt
+	$(call success,Python dependencies installed)
 
 activate:
-	. .venv_ms4000/bin/activate && (\
-		which pio \
-	)
+	$(call announce,🔌 Activation instructions...)
+	@echo -e "$(GREEN)Run in your shell:$(RESET)"
+	@echo -e "$(CYAN)    source .venv_ms4000/bin/activate$(RESET)"
+	@echo -e "$(YELLOW)Then check PlatformIO: 'which pio'$(RESET)"
 
-.PHONY: tools
+# =============================================================================
+# Tools and Factory
+# =============================================================================
+tools:
+	$(call announce,🛠️  Building tools...)
+	which pio || $(call announce, PlatformIO pio not found in PATH)
+	make -C tools/esptool-ck
+	$(call success,Tools built)
 
-all:	tools builder factory
+factory:
+	$(call announce,🏭 Building factory flashing tools...)
+	make -C tools/factoryFlashing
+	$(call success,Factory flashing tools built)
 
-clean:
-	make -C firmware/ clean proto-clean
+# =============================================================================
+# Sub-project Targets (for CLion visibility)
+# =============================================================================
+firmware:
+	$(call announce,📟 Building firmware...)
+	make -C firmware
+	$(call success,Firmware build completed)
+
+firmware-clean:
+	$(call announce,🧹 Cleaning firmware...)
+	make -C firmware clean
+
+firmware-proto:
+	$(call announce,📡 Generating firmware protobufs...)
+	make -C firmware proto
+
+web:
+	$(call announce,🌐 Building web application...)
+	make -C web/app
+	$(call success,Web app built)
+
+web-clean:
+	$(call announce,🧹 Cleaning web app...)
 	make -C web/app clean
+
+# =============================================================================
+# Maintenance
+# =============================================================================
+clean:
+	$(call announce,🧹 Starting full clean...)
+	make -C firmware clean proto-clean
+	make -C web/app clean
+	$(call success,Full clean completed)
+
+rebuild: clean all
+
+help:
+	@echo -e "$(CYAN)════════════════════════════════════════════════════════════$(RESET)"
+	@echo -e "$(WHITE)MS4000 Makefile Help$(RESET)"
+	@echo -e "$(CYAN)════════════════════════════════════════════════════════════$(RESET)"
+	@echo "  all                🔨  Build everything (default)"
+	@echo "  builder            🐳  Build Docker builder image"
+	@echo "  builder-burn       🔥  Docker build + flash firmware"
+	@echo "  builder-shell      🐚  Interactive Docker shell"
+	@echo "  tools              🛠️   Build development tools"
+	@echo "  factory            🏭  Build factory flashing tools"
+	@echo "  firmware           📟  Build firmware only"
+	@echo "  web                🌐  Build web app"
+	@echo "  clean              🧹  Clean all artifacts"
+	@echo "  rebuild            ♻️   Clean + full build"
+	@echo "  python-requirements 📥 Install local Python deps"
+	@echo "  reqs-debian        📦  Install system packages"
+	@echo -e "$(CYAN)════════════════════════════════════════════════════════════$(RESET)"
+
+# =============================================================================
+# Phony targets (essential for CLion and make correctness)
+# =============================================================================
+.PHONY: all builder builder-burn builder-shell builder-test \
+        reqs-debian install-python-venv new-python-environment \
+        python-requirements activate \
+        tools factory firmware firmware-clean firmware-proto \
+        web web-clean clean rebuild help
+
+# vim: set ts=8 sts=8 sw=8 noet ft=make :
