@@ -76,11 +76,9 @@ test:    proto build flash monitor
 
 # note: there is one single source for the shared MS4.proto file - at the root of the repo!
 proto:  proto-clean ../MS4.proto 
-	(\
-		echo "NANOPB_DIR = $(NANOPB_DIR)"; \
-		echo "CFLAGS = $(CFLAGS)"; \
-		cd src/ && $(PROTOC) $(PROTOC_OPTS) --proto_path ../.. ../../MS4.proto  -o ./MS4.pb --nanopb_out=-v:./ && $(MS4_PYTHON) ../../tools/nanopb/generator/nanopb_generator.py ./MS4.pb \
-	)
+	echo "NANOPB_DIR = $(NANOPB_DIR)"; \
+	echo "CFLAGS = $(CFLAGS)"; \
+	cd src/ && $(PROTOC) $(PROTOC_OPTS) --proto_path ../.. ../../MS4.proto  -o ./MS4.pb --nanopb_out=-v:./ && $(MS4_PYTHON) ../../tools/nanopb/generator/nanopb_generator.py ./MS4.pb \
 
 python-reqs:
 	. ../.venv_ms4000/bin/activate && pip install -r requirements.txt
