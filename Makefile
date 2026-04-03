@@ -68,7 +68,7 @@ new-python-environment:
 	echo "IMPORTANT: please run . .venv_ms4000/bin/activate to use the MS4000-local python environment!"
 
 python-requirements:
-	( \
+	. .venv_ms4000/bin/activate && ( \
 		echo "Python in-use is: $(MS4_PYTHON)"; \
 		$(MS4_PYTHON) -m pip install -r firmware/requirements.txt;\
 	)
