@@ -27,5 +27,5 @@ RUN cd firmware/ && \
 RUN cd web/app && make deps && make
 
 # clean working directory
-RUN rm -rf ./*
+#RUN rm -rf ./*
 

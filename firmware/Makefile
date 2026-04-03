@@ -13,7 +13,7 @@ MS4_PORT=/dev/tty.SLAB_USBtoUART
 #'autodetect'
 MS4_PORT=`pio device list --json-output | $(MS4_PYTHON) -c 'exec("""\nimport json,sys\n\nobj=json.load(sys.stdin)\nfor y in obj:\n if "10C4:EA60" in y["hwid"].upper():\n  print (y["port"])\n""") ' | head -1`
 
-all:	clean copy-libs build flash monitor
+all:	clean copy-libs proto build flash monitor
 
 NANOPB_DIR=../tools/nanopb/
 
@@ -74,9 +74,11 @@ test:    proto build flash monitor
 
 # note: there is one single source for the shared MS4.proto file - at the root of the repo!
 proto:  proto-clean ../MS4.proto 
-	@echo "NANOPB_DIR = $(NANOPB_DIR)"
-	@echo "CFLAGS = $(CFLAGS)"	
-	cd src/ && $(PROTOC) $(PROTOC_OPTS) --proto_path ../.. ../../MS4.proto  -o ./MS4.pb --nanopb_out=-v:./ && $(MS4_PYTHON) ../../tools/nanopb/generator/nanopb_generator.py ./MS4.pb
+	. ../.venv_firmware/bin/activate && (\
+		echo "NANOPB_DIR = $(NANOPB_DIR)"; \
+		echo "CFLAGS = $(CFLAGS)"; \
+		cd src/ && $(PROTOC) $(PROTOC_OPTS) --proto_path ../.. ../../MS4.proto  -o ./MS4.pb --nanopb_out=-v:./ && $(MS4_PYTHON) ../../tools/nanopb/generator/nanopb_generator.py ./MS4.pb \
+	)
  
 proto-clean:
 	rm -rf src/MS4.pb.? src/MS4.pb
@@ -84,6 +86,9 @@ proto-clean:
 clean-environment: proto-clean
 	rm -rf .pioenvs
 	rm -rf .venv_firmware
+
+activate:
+	. .venv_firmware/bin/activate
 
 clean:
 	pio run -t clean

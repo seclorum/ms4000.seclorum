@@ -13,7 +13,10 @@ builder-shell:
 	docker run -it --device /dev/ttyUSB0 -v $(shell pwd):/usr/local/ms4000-builder $(BUILDER_NAME) /bin/bash
 
 tools:
-	make -C tools/esptool-ck
+	. .venv_firmware/bin/activate && (\
+		which pio; \
+		make -C tools/esptool-ck\
+	)
 
 factory:
 	make -C tools/factoryFlashing
@@ -22,7 +25,7 @@ factory:
 # please create and use your own local python .venv with these targets:
 #
 install-python-venv:
-	sudo apt install python3-venv
+	sudo apt install -y python3-venv
 
 new-python-environment:
 	rm -rf .venv_firmware
@@ -30,7 +33,22 @@ new-python-environment:
 	echo "IMPORTANT: please run . .venv_firmware/bin/activate to use the MS4000-local python environment!"
 
 python-requirements:
-	@echo "Python in-use is: $(MS4_PYTHON)"
-	$(MS4_PYTHON) -m pip install -r firmware/requirements.txt
+	. .venv_firmware/bin/activate && ( \
+		@echo "Python in-use is: $(MS4_PYTHON)"; \
+		$(MS4_PYTHON) -m pip install -r firmware/requirements.txt;\
+	)
 
+activate:
+	. .venv_firmware/bin/activate && (\
+		which pio \
+	)
+
+python-tooling:	new-python-environment activate python-requirements
+   
 .PHONY: tools
+
+all:	python-tooling tools builder factory
+
+clean:
+	make -C firmware proto-clean clean
+	make -C web/app clean
