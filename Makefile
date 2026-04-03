@@ -45,7 +45,7 @@ builder-test:
 
 
 reqs-debian:	install-python-venv new-python-environment python-requirements
-	sudo apt install -y docker.io docker-compose 
+	sudo apt install -y docker.io docker-compose docker-buildx
  
 tools:
 	(\
