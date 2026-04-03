@@ -81,6 +81,9 @@ proto:  proto-clean ../MS4.proto
 		echo "CFLAGS = $(CFLAGS)"; \
 		cd src/ && $(PROTOC) $(PROTOC_OPTS) --proto_path ../.. ../../MS4.proto  -o ./MS4.pb --nanopb_out=-v:./ && $(MS4_PYTHON) ../../tools/nanopb/generator/nanopb_generator.py ./MS4.pb \
 	)
+
+python-reqs:
+	. ../.venv_ms4000/bin/activate && pip install -r requirements.txt
  
 proto-clean:
 	rm -rf src/MS4.pb.? src/MS4.pb
