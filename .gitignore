@@ -60,3 +60,6 @@ firmware/src/MS4.pb.c
 firmware/src/MS4.pb.h
 
 tools/nanopb/build
+
+# Clion:
+**/**.idea
