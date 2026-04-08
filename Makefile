@@ -70,11 +70,12 @@ builder-burn:
         -e PLATFORMIO_CORE_DIR=/home/builder/.platformio \
         $(BUILDER_NAME) \
         sh -c "\
-            make tools && \
-            cd firmware && \
-            make clean && \
-            make proto && \
-            make \
+		make -C firmware clean && \
+		make -C firmware proto && \
+		make -C firmware flash && \
+		make -C web/app deps && \
+		make -C web/app build && \
+		make -C tools/factoryFlashing factory \
         "
 	$(call success,Firmware built and flashed via Docker)
 

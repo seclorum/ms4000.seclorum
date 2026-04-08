@@ -17,8 +17,9 @@ bitmaps:
 
 factory:
 	./MS3000Tool.py init $(MS4_PORT)
-	./MS3000Tool.py web $(MS4_PORT)
 	./MS3000Tool.py bitmaps $(MS4_PORT)
+	./MS3000Tool.py web $(MS4_PORT)
+
 
 build:
 	make -C ../../firmware
