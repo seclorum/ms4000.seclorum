@@ -61,9 +61,9 @@ builder:
 	$(call success,Docker image '$(BUILDER_NAME)' built successfully)
 
 builder-burn:
-	$(call announce,🔥 Starting Docker build + burn to $(MS_PORT)...)
+	$(call announce,🔥 Starting Docker build + burn to $(MS4_PORT)...)
 	docker run \
-        --device $(MS_PORT) \
+        --device $(MS4_PORT) \
         -v $(PWD):/home/builder/workspace \
         --user $(USER):$(GROUP) \
         --group-add dialout \
@@ -81,7 +81,7 @@ builder-burn:
 builder-shell:
 	$(call announce,🐚 Starting interactive Docker shell...)
 	docker run -it \
-        --device $(MS_PORT) \
+        --device $(MS4_PORT) \
         -v $(PWD):/home/builder/workspace \
         --user $(USER):$(GROUP) \
         --group-add dialout \
