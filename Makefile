@@ -8,11 +8,11 @@
 
 MS4_PYTHON = $(shell which python3)
 
- # Auto-detect port for CP210x (Silabs) devices
-MS4_PORT=`pio device list --json-output | $(MS4_PYTHON) -c 'exec("""\nimport json,sys\n\nobj=json.load(sys.stdin)\nfor y in obj:\n if "10C4:EA60" in y["hwid"].upper():\n  print (y["port"])\n""") ' | head -1`
+# Auto-detect port for CP210x (Silabs) devices
+MS4_PORT_DETECTED := $(shell pio device list --json-output | $(MS4_PYTHON) -c 'exec("""\nimport json,sys\nobj=json.load(sys.stdin)\nfor y in obj:\n if "10C4:EA60" in y["hwid"].upper():\n  print(y["port"])\n""")' | head -1)
 
 # Fallback to default if detection fails
-MS4_PORT := $(if $(MS4_PORT),$(MS4_PORT),/dev/ttyUSB0)
+MS4_PORT := $(or $(strip $(MS4_PORT_DETECTED)),/dev/ttyUSB0)
 
 BUILDER_NAME ?= ms4000-builder
 PWD := $(shell pwd)
