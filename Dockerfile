@@ -4,6 +4,9 @@
 FROM debian:stable-20260316-slim
 WORKDIR /home/builder/workspace
 
+# Python i/o should be unbuffered for tooling to work properly:
+ENV PYTHONUNBUFFERED=1
+
 # create user
 ARG UID=1000
 ARG GID=1000
