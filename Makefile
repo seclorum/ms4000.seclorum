@@ -35,15 +35,15 @@ WHITE   = \033[1;37m
 RESET   = \033[0m
 
 define announce
-    @echo -e "$(CYAN)[$$(date '+%Y-%m-%d %H:%M:%S')] $(1)$(RESET)"
+    @echo -e "$(RED) [MS4000-build] $(CYAN)[$$(date '+%Y-%m-%d %H:%M:%S')] $(1)$(RESET)"
 endef
 
 define success
-    @echo -e "$(GREEN)[$$(date '+%Y-%m-%d %H:%M:%S')] ✅ SUCCESS: $(1)$(RESET)"
+    @echo -e "$(RED) [MS4000-build] $(GREEN)[$$(date '+%Y-%m-%d %H:%M:%S')] ✅ SUCCESS: $(1)$(RESET)"
 endef
 
 define warning
-    @echo -e "$(YELLOW)[$$(date '+%Y-%m-%d %H:%M:%S')] ⚠️  $(1)$(RESET)"
+    @echo -e "$(RED) [MS4000-build] $(YELLOW)[$$(date '+%Y-%m-%d %H:%M:%S')] ⚠️  $(1)$(RESET)"
 endef
 
 # =============================================================================
