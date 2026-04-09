@@ -66,7 +66,7 @@ builder-clean:
 	docker image prune -f --filter "label=stage=builder" 2>/dev/null || true
 	$(call success,Docker image '$(BUILDER_NAME)' cleaned successfully)
 
-builder-burn:	builder
+builder-burn:
 	$(call announce,🔥 Starting Docker build + burn to $(MS4_PORT)...)
 	docker run \
         --device $(MS4_PORT) \
