@@ -1,5 +1,5 @@
 
-#define DEFAULT_FRAME_MULTIPLIER 4
+#define DEFAULT_FRAME_MULTIPLIER 2
 #define MAX_FRAME_MULTIPLIER 12
 
 class MagicPOVMode : public MagicShifterBaseMode {
