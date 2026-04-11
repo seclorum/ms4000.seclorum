@@ -136,12 +136,26 @@ reset-device:
 clean:
 	$(call announce,🧹 Cleaning PlatformIO build artifacts...)
 	-pio run -t clean
+	rm -rf data/*
 	$(call success,Clean completed)
 
 clean-environment: proto-clean
 	$(call announce,🗑️  Full environment clean...)
 	rm -rf .pioenvs .piolibdeps .venv_ms4000
 	$(call success,Environment cleaned)
+
+package-assets:
+	$(call announce,📦 Packaging firmware assets [.magicBitmaps/etc.] ...)
+	mkdir -p data/
+	cp -rfv assets/* data/
+	$(call success,📦 Packaging firmware assets ...)
+
+package:	package-assets
+	$(call announce,📦 Packaging web+firmware assets to data ...)
+	make -C ../web/app package
+	$(call success,📦 Packaging web+firmware assets to data ...)
+
+asset-fs:	package	uploadfs
 
 rebuild: clean all
 
