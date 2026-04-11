@@ -71,7 +71,7 @@
 // Power management pin
 #define PIN_PWR_MGT 16
 
-#define MAX_FILENAME_LENGTH 32
+#define MAX_FILENAME_LENGTH 64
 #define MAX_TEXT_LENGTH 16
 
 #define BUTTON_PWR_THRESHOLD_DEFAULT 970
