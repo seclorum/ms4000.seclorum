@@ -64,3 +64,6 @@ tools/nanopb/build
 
 # Clion:
 **/**.idea
+
+# Vite:
+**/**.vite
