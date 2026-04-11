@@ -4,7 +4,7 @@
 
 #include <WiFiUdp.h>
 
-#define BEAT_MODE_USE_MQTT 1
+//#define BEAT_MODE_USE_MQTT 1
 
 class MagicBeatMode : public MagicShifterBaseMode {
 
