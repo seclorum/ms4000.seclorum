@@ -49,8 +49,9 @@ endef
 # =============================================================================
 # Default target (important for CLion)
 # =============================================================================
-all: tools builder package
-	$(call success,MS4000 top-level build completed)
+release: tools builder package
+	make -C firmware/ flash
+	$(call success,MS4000 top-level release build completed)
 
 # =============================================================================
 # Docker Builder Targets

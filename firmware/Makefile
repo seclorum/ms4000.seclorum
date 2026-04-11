@@ -45,7 +45,7 @@ endef
 # =============================================================================
 # Default target
 # =============================================================================
-all: clean copy-libs proto build flash monitor
+all: clean copy-libs proto build flash 
 	$(call success,Firmware full cycle completed)
 
 # =============================================================================
