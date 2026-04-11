@@ -4,7 +4,6 @@
 // web interface, so we refresh our onboard POV files with every
 // user event (except of course, Shaking..)
 
-
 #define FRAME_MULTIPLY 2
 
 #define MS_SHAKEFILE_DEFAULT "nix"
@@ -14,210 +13,197 @@
 // mode
 BouncingBallMode msModeBouncingBall(600);
 
-class MagicShakeMode:public MagicShifterBaseMode {
+class MagicShakeMode : public MagicShifterBaseMode {
 private:
-	// The direction through the filelist which the user is scrolling (-ve/+ve)
-	int dirCursor = 0;
-	int colorCursor = 0;
+  // The direction through the filelist which the user is scrolling (-ve/+ve)
+  int dirCursor = 0;
+  int colorCursor = 0;
 
-	// the last frame of the Shake
-	MagicShifterImageText msMagicShakeText;
+  // the last frame of the Shake
+  MagicShifterImageText msMagicShakeText;
 
-	MagicPOVMode lPOVMode;
-	MagicShifterImage lLocalImage;
+  MagicPOVMode lPOVMode;
+  MagicShifterImage lLocalImage;
 
-	MS4_App_Shake &_shake = msGlobals.pbuf.apps.shake;
+  MS4_App_Shake &_shake = msGlobals.pbuf.apps.shake;
 
-	// the number of files discovered onboard during the scan for POV images..
-	int numFiles = 0;
-	bool correctBrightness = false;
+  // the number of files discovered onboard during the scan for POV images..
+  int numFiles = 0;
+  bool correctBrightness = false;
 
 public:
+  MagicShakeMode() { modeName = "Image"; }
+  // Get a file from the list of onboard files, filtering only .magicBitmap
+  // files// fileIndex: the idx of the file in the list// maxFiles: returns the
+  // length of the list// return: filename when found, empty string when not
+  // found
 
-	MagicShakeMode() {
-		modeName = "Image";
-	}
-	// Get a file from the list of onboard files, filtering only .magicBitmap files// fileIndex: the idx of the file in the list// maxFiles: returns the length of the list// return: filename when found, empty string when not found
+  void emit() {}
 
-	void emit () {
+  String getFileNameAtIndex(int fileIndex, int &maxFiles) {
+    Dir POVDir;
+    POVDir = LittleFS.openDir("");
 
-	}
+    int cnt = 0;
 
-	String getFileNameAtIndex(int fileIndex, int &maxFiles) {
-		Dir POVDir;
-		POVDir = LittleFS.openDir("");
+    String foundFilename = "";
+    String currentFilename = "";
 
-		int cnt = 0;
+    while (1) {
 
-		String foundFilename = "";
-		String currentFilename = "";
+      if (!POVDir.next())
+        break; // end of list
 
-		while (1) {
+      currentFilename = POVDir.fileName();
 
-			if (!POVDir.next())
-				break;			// end of list
+      if (!currentFilename.endsWith(".magicBitmap"))
+        continue;
 
-			currentFilename = POVDir.fileName();
+      if (cnt == fileIndex)
+        foundFilename = currentFilename;
 
-			if (!currentFilename.endsWith(".magicBitmap"))
-				continue;
+      cnt++;
+    }
 
-			if (cnt == fileIndex)
-				foundFilename = currentFilename;
+    maxFiles = cnt;
 
-			cnt++;
-		}
+    return foundFilename;
+  }
 
-		maxFiles = cnt;
+  int getIndexOf(String fileName) {
+    Dir POVDir;
+    POVDir = LittleFS.openDir("");
 
-		return foundFilename;
-	}
+    int cnt = 0;
 
-	int getIndexOf(String fileName) {
-		Dir POVDir;
-		POVDir = LittleFS.openDir("");
+    String foundFilename = "";
+    String currentFilename = "";
 
-		int cnt = 0;
+    while (1) {
+      if (!POVDir.next())
+        break; // end of list
 
-		String foundFilename = "";
-		String currentFilename = "";
+      currentFilename = POVDir.fileName();
 
-		while (1) {
-			if (!POVDir.next())
-				break;			// end of list
+      if (!currentFilename.endsWith(".magicBitmap"))
+        continue;
 
-			currentFilename = POVDir.fileName();
+      if (currentFilename.equals(fileName))
+        return cnt;
 
-			if (!currentFilename.endsWith(".magicBitmap"))
-				continue;
+      cnt++;
+    }
 
-			if (currentFilename.equals(fileName))
-				return cnt;
+    return -1;
+  }
 
-			cnt++;
-		}
+  // load a magic Shake file for display
+  void loadShakeFile(const char *filename) {
+    msSystem.slogln(String(modeName) + " load File:" + String(filename));
 
-		return -1;
-	}
+    lLocalImage.close();
+    lLocalImage.LoadFile(filename);
+    lPOVMode.setImage(&lLocalImage);
+  }
 
-	// load a magic Shake file for display
-	void loadShakeFile(const char *filename) {
-		if (!hasContext()) return;
+  void loadImageByIndex(int idx) {
+    dirCursor = idx;
+    String toLoad = getFileNameAtIndex(dirCursor, numFiles);
 
-		context->getLogger().logln((String(modeName) + " load File:" + String(filename)).c_str());
+    // out of bounds
+    if (toLoad.length() == 0) {
+      dirCursor = 0;
+      toLoad = getFileNameAtIndex(0, numFiles);
+      if (toLoad.length() == 0) // !J! todo: default
+        toLoad = String(DEFAULT_SHAKE_IMAGE);
+    }
 
-		lLocalImage.close();
-		lLocalImage.LoadFile(filename);
-		lPOVMode.setImage(&lLocalImage);
-	}
+    if (toLoad.length() > 0) {
+      loadShakeFile(toLoad.c_str());
+    }
+  }
 
-	void loadImageByIndex(int idx) {
-		dirCursor = idx;
-		String toLoad = getFileNameAtIndex(dirCursor, numFiles);
+  void loadImageByName(String fileName) {
+    int idx = getIndexOf(fileName);
+    loadImageByIndex(idx);
+  }
 
-		// out of bounds
-		if (toLoad.length() == 0) {
-			dirCursor = 0;
-			toLoad = getFileNameAtIndex(0, numFiles);
-			if (toLoad.length() == 0)	// !J! todo: default
-				toLoad = String(DEFAULT_SHAKE_IMAGE);
-		}
+  // Start the MagicShake mode:
+  //  shake the last-uploaded .magicBitmap (if set)
+  //  prime the file list, which may update dynamically during our session
+  void start() {
+    lPOVMode.setFrameMultiplier(6);
+    lPOVMode.start();
+    loadImageByIndex(0);
+    if (_shake.bounce == 0)
+      _shake.bounce = 14;
+  }
 
-		if (toLoad.length() > 0) {
-			loadShakeFile(toLoad.c_str());
-		}
-	}
+  // stop the MagicShake mode
+  void stop() {
+    lLocalImage.close();
+    lPOVMode.stop();
+  }
 
-	void loadImageByName(String fileName) {
-		int idx = getIndexOf(fileName);
-		loadImageByIndex(idx);
-	}
+  void reset() {
+    stop();
+    start();
+  }
 
-	// Start the MagicShake mode:
-	//  shake the last-uploaded .magicBitmap (if set)
-	//  prime the file list, which may update dynamically during our session
-	void start() {
-		lPOVMode.setFrameMultiplier(6);
-		lPOVMode.start();
-		loadImageByIndex(0);
-		if (_shake.bounce == 0)
-			_shake.bounce = 14;
-	}
+  bool step() {
+#define MAX_BALL_COLORS 16
+    int newCursor = dirCursor;
+    int colorcursor = colorCursor;
 
-	// stop the MagicShake mode
-	void stop() {
-		lLocalImage.close();
-		lPOVMode.stop();
-	}
+    if (msSystem.msButtons.msBtnALongHit == true) {
+      msSystem.msButtons.msBtnALongHit = false;
+      correctBrightness = !correctBrightness;
+    }
 
-	void reset() {
-		stop();
-		start();
-	}
+    if (msSystem.msButtons.msBtnAHit == true) {
+      msSystem.msButtons.msBtnAHit = false;
+      newCursor++;
+    }
 
-	bool step() {
-		if (!hasContext()) return false;
+    if (msSystem.msButtons.msBtnBHit == true) {
+      msSystem.msButtons.msBtnBHit = false;
+      newCursor--;
+    }
 
-		extern MagicShifterSystem msSystem;
-		extern MagicShifterGlobals msGlobals;
+    if (msSystem.msButtons.msBtnPwrHit == true) {
+      msSystem.msButtons.msBtnPwrHit = false;
+      colorcursor--;
+    }
 
-		auto& buttons = context->getButtons();
+    if (colorcursor < 0)
+      colorcursor = MAX_BALL_COLORS;
 
-		#define MAX_BALL_COLORS 16
-		int newCursor = dirCursor;
-		int colorcursor = colorCursor;
+    if (newCursor != dirCursor) {
+      if (newCursor >= numFiles)
+        newCursor = 0;
+      if (newCursor < 0)
+        newCursor = numFiles - 1;
+      loadImageByIndex(newCursor);
+    }
+    // !J! TODO: give modes an event queue ..
+    if (msGlobals.ggShouldAutoLoad == 1) {
+      loadImageByName(msGlobals.ggUploadFileName);
+      msGlobals.ggShouldAutoLoad = 0;
+    }
 
-		if (buttons.isButtonALongPressed()) {
-			msSystem.msButtons.msBtnALongHit = false;
-			correctBrightness = !correctBrightness;
-		}
+    if (lPOVMode.step()) {
+      return true;
+    } else {
 
-		if (buttons.isButtonAPressed()) {
-			msSystem.msButtons.msBtnAHit = false;
-			newCursor++;
-		}
+      float fX = msGlobals.ggAccel[XAXIS];
+      // float fY = msGlobals.ggAccel[YAXIS];
+      msModeBouncingBall.applyForce(
+          (msGlobals.ggCurrentMicros - msGlobals.ggLastMicros) / 1000.0,
+          fX * (_shake.bounce * 1.0)); // 3
 
-		if (buttons.isButtonBPressed()) {
-			msSystem.msButtons.msBtnBHit = false;
-			newCursor--;
-		}
+      msModeBouncingBall.simpleBouncingBall(_shake.colorIndex);
 
-		if (buttons.isPowerButtonPressed()) {
-			msSystem.msButtons.msBtnPwrHit = false;
-			colorcursor--;
-		}
-
-		if (colorcursor < 0)
-			colorcursor = MAX_BALL_COLORS;
-
-		if (newCursor != dirCursor) {
-			if (newCursor >= numFiles)
-				newCursor = 0;
-			if (newCursor < 0)
-				newCursor = numFiles - 1;
-			loadImageByIndex(newCursor);
-		}
-		// !J! TODO: give modes an event queue ..
-		if (msGlobals.ggShouldAutoLoad == 1) {
-			loadImageByName(msGlobals.ggUploadFileName);
-			msGlobals.ggShouldAutoLoad = 0;
-		}
-
-		if (lPOVMode.step()) {
-			return true;
-		} else {
-
-			float fX = msGlobals.ggAccel[XAXIS];
-			// float fY = msGlobals.ggAccel[YAXIS];
-			msModeBouncingBall.
-			applyForce((msGlobals.ggCurrentMicros -
-				msGlobals.ggLastMicros) / 1000.0, fX * (_shake.bounce * 1.0)); // 3
-
-			msModeBouncingBall.simpleBouncingBall(_shake.colorIndex);
-
-			return false;
-		}
-
-	}
-
+      return false;
+    }
+  }
 };

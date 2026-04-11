@@ -5,127 +5,126 @@
 // render the magnetometer sensor data
 //
 
-class MagicMagnetMode:public MagicShifterBaseMode {
+class MagicMagnetMode : public MagicShifterBaseMode {
 
-  private:
-
-	int magnet_submode =  msGlobals.pbuf.apps.magnet.mode;
+private:
+  int magnet_submode = msGlobals.pbuf.apps.magnet.mode;
 
 #ifdef CONFIG_ENABLE_OSC
-	// local OSC message
-	OSCMessage lOSCMessage = OSCMessage("/magicshifter3000/magnetometer/LED/");
+  // local OSC message
+  OSCMessage lOSCMessage = OSCMessage("/magicshifter3000/magnetometer/LED/");
 #endif
 
-  public:
+public:
+  MagicMagnetMode() { modeName = "Compass"; }
 
-  	MagicMagnetMode() {
-		 	modeName = "Compass";
+  void start() {}
 
-	}
+  void stop() {}
 
-	void start() {
+  bool step() {
+    static int autoCalResetCounter = 0;
 
-	}
+    magnet_submode = msGlobals.pbuf.apps.magnet.mode;
 
-	void stop() {
-	}
+    // msSystem.slog(modeName + " x: ");
 
-	bool step() {
-		if (!hasContext()) return true;
+    if (msSystem.msButtons.msBtnAHit) {
+      magnet_submode--;
+      msSystem.msButtons.msBtnAHit = false;
+    }
+    if (msSystem.msButtons.msBtnBHit) {
+      magnet_submode++;
+      msSystem.msButtons.msBtnBHit = false;
+    }
 
-		// Note: Direct sensor register access and config still need msSystem
-		extern MagicShifterSystem msSystem;
-		extern MagicShifterGlobals msGlobals;
+    // msSystem.slog(modeName + " a: ");
 
-		static int autoCalResetCounter = 0;
+    if (magnet_submode < _MS4_App_Magnet_Mode_MIN)
+      magnet_submode = _MS4_App_Magnet_Mode_MAX;
 
-		magnet_submode =  msGlobals.pbuf.apps.magnet.mode;
+    if (magnet_submode > _MS4_App_Magnet_Mode_MAX)
+      magnet_submode = _MS4_App_Magnet_Mode_MIN;
 
-		auto& buttons = context->getButtons();
-		auto& leds = context->getLEDs();
-		auto& logger = context->getLogger();
-		uint8_t brightness = context->getBrightness();
+    msSystem.msSensor.readMagnetometerData(msGlobals.ggMagnet);
 
-		if (buttons.isButtonAPressed()) {
-			magnet_submode--;
-			msSystem.msButtons.msBtnAHit = false;
-		}
-		if (buttons.isButtonBPressed()) {
-			magnet_submode++;
-			msSystem.msButtons.msBtnBHit = false;
-		}
+    // msSystem.slog(modeName + " b: ");
 
-		if (magnet_submode < _MS4_App_Magnet_Mode_MIN)
-			magnet_submode = _MS4_App_Magnet_Mode_MAX;
+    if ((msSystem.msSensor.readRegister(0x5E) & 0x02)) {
+      autoCalResetCounter++;
+      if (autoCalResetCounter > 10) {
+        // M_CTRL_REG2: Hybrid auto increment, Magnetic measurement min/max
+        // detection function reset
+        // msSystem.slog(modeName + " c: ");
 
-		if (magnet_submode > _MS4_App_Magnet_Mode_MAX)
-			magnet_submode = _MS4_App_Magnet_Mode_MIN;
+        msSystem.msSensor.writeRegister(0x5C, 0x24);
+        autoCalResetCounter = 0;
+        // msSystem.slog(modeName + " d: ");
+      }
+    } else {
+      autoCalResetCounter = 0;
+    }
 
-		msSystem.msSensor.readMagnetometerData(msGlobals.ggMagnet);
+    int degrees =
+        int(atan2(msGlobals.ggMagnet[YAXIS], -msGlobals.ggMagnet[XAXIS]) * 180 /
+            M_PI);
 
-		if ((msSystem.msSensor.readRegister(0x5E) & 0x02)) {
-			autoCalResetCounter++;
-			if (autoCalResetCounter > 10) {
-				// M_CTRL_REG2: Hybrid auto increment, Magnetic measurement min/max detection function reset
-				msSystem.msSensor.writeRegister(0x5C, 0x24);
-				autoCalResetCounter = 0;
-			}
-		} else {
-			autoCalResetCounter = 0;
-		}
+    msSystem.slog(modeName + " degrees: " + String(degrees));
 
-		int degrees =
-			int (atan2
-				 (msGlobals.ggMagnet[YAXIS],
-				  -msGlobals.ggMagnet[XAXIS]) * 180 / M_PI);
+    msSystem.msLEDs.fillLEDs(0, 0, 0, msGlobals.ggBrightness);
+    int lednr = map(abs(degrees), 0, 180, 0, 15);
 
-		logger.log((modeName + " degrees: " + String(degrees)).c_str());
+    // msSystem.slog(modeName + " e: ");
 
-		leds.fillLEDs(0, 0, 0, brightness);
-		int lednr = map(abs(degrees), 0, 180, 0, 15);
+    int degNorth = -degrees;
+    int degSouth = 180 - degrees;
 
-		int degNorth = -degrees;
-		int degSouth = 180 - degrees;
+    if (degSouth > 180)
+      degSouth -= 360;
+    int ledNorth = map(abs(degNorth), 0, 180, 0, 15);
+    int ledSouth = map(abs(degSouth), 0, 180, 0, 15);
 
-		if (degSouth>180) degSouth-=360;
-		int ledNorth = map(abs(degNorth), 0, 180, 0, 15);
-		int ledSouth = map(abs(degSouth), 0, 180, 0, 15);
+    // msSystem.slog(modeName + " f: ");
 
-		if (magnet_submode <= MS4_App_Magnet_Mode_BARS_DOT) {
-			for (int lC = 0; lC < lednr; lC++)
-				leds.setLED(lC, 0, 255, 0, brightness);
+    if (magnet_submode <= MS4_App_Magnet_Mode_BARS_DOT) {
+      for (int lC = 0; lC < lednr; lC++)
+        msSystem.msLEDs.setLED(lC, 0, 255, 0,
+                               msGlobals.ggBrightness); // !J! hack
 
-			for (int lC = lednr + 1; lC < MAX_LEDS; lC++)
-				leds.setLED(lC, 255, 0, 0, brightness);
-		}
+      for (int lC = lednr + 1; lC < MAX_LEDS; lC++)
+        msSystem.msLEDs.setLED(lC, 255, 0, 0,
+                               msGlobals.ggBrightness); // !J! hack
+    }
 
-		if ((magnet_submode == MS4_App_Magnet_Mode_BARS) ||
-			(magnet_submode == MS4_App_Magnet_Mode_DOTS))
-			leds.setLED(lednr, 0, 255, 0, brightness);
+    // msSystem.slog(modeName + " g: ");
 
-		if (magnet_submode == MS4_App_Magnet_Mode_BARS_DOT)
-			leds.setLED(lednr, 0, 0, 255, brightness);
+    if ((magnet_submode == MS4_App_Magnet_Mode_BARS) ||
+        (magnet_submode == MS4_App_Magnet_Mode_DOTS))
+      msSystem.msLEDs.setLED(lednr, 0, 255, 0, msGlobals.ggBrightness);
 
-		if (magnet_submode == MS4_App_Magnet_Mode_OTHER) {
-			leds.setLED(ledSouth, 0, 255, 0, brightness);
-			leds.setLED(ledNorth, 255, 0, 0, brightness);
-		}
+    if (magnet_submode == MS4_App_Magnet_Mode_BARS_DOT)
+      msSystem.msLEDs.setLED(lednr, 0, 0, 255, msGlobals.ggBrightness);
 
- 		msGlobals.pbuf.apps.magnet.mode = (MS4_App_Magnet_Mode)magnet_submode;
+    if (magnet_submode == MS4_App_Magnet_Mode_OTHER) {
+      msSystem.msLEDs.setLED(ledSouth, 0, 255, 0, msGlobals.ggBrightness);
+      msSystem.msLEDs.setLED(ledNorth, 255, 0, 0, msGlobals.ggBrightness);
+    }
 
-		leds.updateLEDs();
+    // msSystem.slog(modeName + " h: " + String(magnet_submode));
 
-		// !J! hak: send OSC Msg.
+    msGlobals.pbuf.apps.magnet.mode = (MS4_App_Magnet_Mode)magnet_submode;
+
+    msSystem.msLEDs.updateLEDs();
+
+    // !J! hak: send OSC Msg.
 #ifdef CONFIG_ENABLE_OSC
-		lOSCMessage.add(lednr);
+    lOSCMessage.add(lednr);
 #endif
 
-		delay(30);
+    delay(30);
 
-		return true;
-
-	}
-
+    return true;
+  }
 };
 
 #endif

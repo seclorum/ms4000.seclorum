@@ -1,37 +1,35 @@
 /*
  * MagicShifter3000 OS, Copyright (c) wizards@Work 2016
  * Authors: wizard23(pt), seclorum(jv), jaeh(je)
- * Notes: 
+ * Notes:
  *          All code is conflated by headers (.h):w
  *          Code prefix- is ms*, as in msConfig, msSystem, etc.
  *
- * The purpose of this code is to provide the MS3000 user with 
- * a unique and engaging user interface, with the available LED's 
+ * The purpose of this code is to provide the MS3000 user with
+ * a unique and engaging user interface, with the available LED's
  * and button configurations, as well as additional Web-based UI
  * for configuration and interaction.
  */
 
 extern "C" {
-#include <stdbool.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <stdarg.h>
 #include <ctype.h>
 #include <errno.h>
-#include <time.h>
-#include <math.h>				/* for HUGE_VAL */
 #include <json/json.h>
 #include <json/jsonparse.h>
 #include <json/jsontree.h>
+#include <math.h> /* for HUGE_VAL */
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <time.h>
 }
-//compiler.c.elf.libs=-lm -lgcc -lhal -lphy -lnet80211 -llwip -lwpa -lmain -lpp -lsmartconfig -lc -ljson
+// compiler.c.elf.libs=-lm -lgcc -lhal -lphy -lnet80211 -llwip -lwpa -lmain -lpp
+// -lsmartconfig -lc -ljson
+#include <map>
 #include <vector>
-#include <map> 
 
 #include <FS.h>
 #include <LittleFS.h>
@@ -63,108 +61,102 @@ MagicShifterWebServer msWebServer;
 //  a) a low-power emergency
 //  b) something faulty with an onboard sensor device
 //
-void systemFault(int aFault)
-{
-	Serial.print("FAULT:");
-	Serial.println(String(msGlobals.ggFault));
-	switch (msGlobals.ggFault) {
-		case FAULT_VERY_LOW_POWER:
-			msPowerEmergencyMode.start();
-		break;
-		case FAULT_NO_ACCELEROMETER:
-			msSystem.msLEDs.errorSwipe();
-		break;
-		default: {};
-	}
+void systemFault(int aFault) {
+  Serial.print("FAULT:");
+  Serial.println(String(msGlobals.ggFault));
+  switch (msGlobals.ggFault) {
+  case FAULT_VERY_LOW_POWER:
+    msPowerEmergencyMode.start();
+    break;
+  case FAULT_NO_ACCELEROMETER:
+    msSystem.msLEDs.errorSwipe();
+    break;
+  default: {
+  };
+  }
 }
-
 
 // Begin MagicShifter3000 operation
 //  initializes the system, web server, configuration, syslog,
 //  and populates the global mode list depending on configuration
-void setup()
-{
-	// record our bootup time from the beginning
-	msGlobals.ggBootTime = millis();
+void setup() {
+  // record our bootup time from the beginning
+  msGlobals.ggBootTime = millis();
 
-	// start the system UI and event handlers
-	msSystem.setup();
+  // start the system UI and event handlers
+  msSystem.setup();
 
-	// Phase 2C: Initialize mode context for dependency injection
-	// This wires IModeContext to all mode instances
-	initializeModeContext();
+  // get the web interface started
+  msWebServer.start();
 
-	// get the web interface started
-	msWebServer.start();
+  // set up syslog .. we can use UDP syslog if necessary, so that the Serial
+  // ports can be available for other things, e.g. MIDI
+  ServerConfig sysLogInfo;
+  if (msSystem.Settings.getSyslogConfig(&sysLogInfo)) {
+    msSystem.msSysLog.setup(sysLogInfo.hostname);
+    msSystem.msSysLog.sendSysLogMsg(String("sysLog functionality is enabled."));
+  }
 
-	// set up syslog .. we can use UDP syslog if necessary, so that the Serial
-	// ports can be available for other things, e.g. MIDI
-	ServerConfig sysLogInfo;
-	if (msSystem.Settings.getSyslogConfig(&sysLogInfo)) {
-		msSystem.msSysLog.setup(sysLogInfo.hostname);
-		msSystem.msSysLog.sendSysLogMsg(String("sysLog functionality is enabled."));
-	}
+  // NOTE: configure all modes available in the main menu
+  msGlobals.ggModeList.push_back(&msMagicShake);
+  msGlobals.ggModeList.push_back(&msMagicLight);
+  msGlobals.ggModeList.push_back(&msMagicMagnet);
+  msGlobals.ggModeList.push_back(&msSysText);
+  msGlobals.ggModeList.push_back(&msMagicRemote);
+  msGlobals.ggModeList.push_back(&msMagicBeat);
 
-	// NOTE: configure all modes available in the main menu
-	msGlobals.ggModeList.push_back(&msMagicShake);
-	msGlobals.ggModeList.push_back(&msMagicLight);
-	msGlobals.ggModeList.push_back(&msMagicMagnet);
-	msGlobals.ggModeList.push_back(&msSysText);
-	msGlobals.ggModeList.push_back(&msMagicRemote);
-	msGlobals.ggModeList.push_back(&msMagicBeat);
+  // needs work ?
+  // msGlobals.ggModeList.push_back(&msMagicBike);
+  // msGlobals.ggModeList.push_back(&msMagicCountdown);
+  // msGlobals.ggModeList.push_back(&msMagicConway);
 
-	// needs work ?
-	// msGlobals.ggModeList.push_back(&msMagicBike);
-	// msGlobals.ggModeList.push_back(&msMagicCountdown);
-	// msGlobals.ggModeList.push_back(&msMagicConway);	
+  WiFi.hostname(msSystem.Settings.getAPNameOrUnique().c_str());
+  ArduinoOTA.setHostname(msSystem.Settings.getAPNameOrUnique().c_str());
 
-	WiFi.hostname(msSystem.Settings.getAPNameOrUnique().c_str());
-	ArduinoOTA.setHostname(msSystem.Settings.getAPNameOrUnique().c_str());
+  msSystem.slogln("wifi: hostname is:" + WiFi.hostname());
+  msSystem.slogln("wifi: OTA hostname is:" + ArduinoOTA.getHostname());
 
-	msSystem.slogln("wifi: hostname is:" + WiFi.hostname());
-	msSystem.slogln("wifi: OTA hostname is:" + ArduinoOTA.getHostname());
+  // reset settings to mode 0
+  msGlobals.ui.currentMode = 0;
 
-	// reset settings to mode 0
-	msGlobals.ui.currentMode = 0;
-
-	// if MIDI has been configured, enable the additional MIDI mode(s)
+  // if MIDI has been configured, enable the additional MIDI mode(s)
 #ifdef CONFIG_ENABLE_MIDI
-	
-	msGlobals.ggModeList.push_back(&msMIDIArpeggiator);
-	msGlobals.ggModeList.push_back(&msMIDISequencer);
+
+  msGlobals.ggModeList.push_back(&msMIDIArpeggiator);
+  msGlobals.ggModeList.push_back(&msMIDISequencer);
 
 #ifdef CONFIG_ENABLE_MIDI_SERIAL
-	// The MIDI byte parser, provided by the miby module ..
+  // The MIDI byte parser, provided by the miby module ..
 
-	SERIAL_MIDI_init();
-	
-	msGlobals.ui.currentMode = 0;
+  SERIAL_MIDI_init();
+
+  msGlobals.ui.currentMode = 0;
 
 #endif
 
 #ifdef CONFIG_ENABLE_MIDI_RTP
-	setupRTPDebugHandlers();
-	AppleMIDI.begin(msSystem.Settings.getAPNameOrUnique().c_str());
-	msSystem.slog("MIDI(rtp) session started, identity: " + String(AppleMIDI.getSessionName()) );
+  setupRTPDebugHandlers();
+  AppleMIDI.begin(msSystem.Settings.getAPNameOrUnique().c_str());
+  msSystem.slog("MIDI(rtp) session started, identity: " +
+                String(AppleMIDI.getSessionName()));
 #endif
 
 #endif // CONFIG_ENABLE_MIDI
 
-	// OTA updater
-	msGlobals.ggModeList.push_back(&msMagicUpdate);
+  // OTA updater
+  msGlobals.ggModeList.push_back(&msMagicUpdate);
 
-	// Show the battery power level on startup
-	msSystem.showBatteryStatus(true);
+  // Show the battery power level on startup
+  msSystem.showBatteryStatus(true);
 
-	msSystem.fileDump();
+  msSystem.fileDump();
 
-	// mode selector is a special submode, so we start it now also
-	msModeSelector.start();
+  // mode selector is a special submode, so we start it now also
+  msModeSelector.start();
 
-	// now prepare the first module for starting
-	msGlobals.ggModeList[msGlobals.ui.currentMode]->start();
+  // now prepare the first module for starting
+  msGlobals.ggModeList[msGlobals.ui.currentMode]->start();
 }
-
 
 // main OS loop - despatch steps for each of:
 //	a) system user interface events (buttons/sensors/power)
@@ -174,37 +166,36 @@ void setup()
 // then check for menu-mode flags, switch immediately to menu-mode if necessary
 //   .. otherwise, let the currently selected mode execute a step()
 // last, check for general faults
-void loop()
-{
-	// let WebServer process events.
-	msWebServer.step();
+void loop() {
+  // let WebServer process events.
+  msWebServer.step();
 
-	// let SystemUI process events.
-	msSystem.step();
+  // let SystemUI process events.
+  msSystem.step();
 
-	// if rtpMIDI is configured, run it..
+  // if rtpMIDI is configured, run it..
 #ifdef CONFIG_ENABLE_MIDI_RTP
-		AppleMIDI.run();
+  AppleMIDI.run();
 #endif
 
 #ifdef CONFIG_ENABLE_MIDI_SERIAL
-		SERIAL_MIDI_loop();
+  SERIAL_MIDI_loop();
 #endif
 
-	// if SystemUI events trigger it (UI), display the mode-selector menu:
-	if (msSystem.modeMenuActivated) {
-		int newMode = msModeSelector.select();
-		if (newMode >= 0) {
-			msSystem.modeMenuActivated = false;
-			msSystem.setMode(newMode);
-		}
-	} else {
-		// despatch to current mode
-		msGlobals.ggModeList[msGlobals.ui.currentMode]->step();
-	}
+  // if SystemUI events trigger it (UI), display the mode-selector menu:
+  if (msSystem.modeMenuActivated) {
+    int newMode = msModeSelector.select();
+    if (newMode >= 0) {
+      msSystem.modeMenuActivated = false;
+      msSystem.setMode(newMode);
+    }
+  } else {
+    // despatch to current mode
+    msGlobals.ggModeList[msGlobals.ui.currentMode]->step();
+  }
 
-	// fault-checks
-	if (msGlobals.ggFault > 0) {
-		systemFault(msGlobals.ggFault);
-	}
+  // fault-checks
+  if (msGlobals.ggFault > 0) {
+    systemFault(msGlobals.ggFault);
+  }
 }
