@@ -38,6 +38,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+
       - name: Verify build and extract binaries
         id: verify
         run: |
@@ -45,13 +46,17 @@ jobs:
 
           docker run --rm ms4000-firmware-builder:latest bash -c '
             set -euo pipefail
+            cd firmware
 
-            echo "→ Firmware build check:"
-            FIRMWARE_BIN=$(find firmware/.pio/build/ -name "firmware.bin" | head -n 1)
-            FILESYSTEM_BIN=$(find firmware/.pio/build/ -name "filesystem.bin" | head -n 1)
+            echo "→ Building firmware + filesystem image..."
+            pio run -t buildfs
+
+            echo "→ Locating binaries..."
+            FIRMWARE_BIN=$(find .pio/build/ -name "firmware.bin" | head -n 1)
+            FILESYSTEM_BIN=$(find .pio/build/ -name "*fs.bin" | head -n 1)   # catches spiffs.bin or littlefs.bin
 
             if [ -n "$FIRMWARE_BIN" ]; then
-              echo "✅ firmware.bin found at: $FIRMWARE_BIN"
+              echo "✅ firmware.bin found"
               mkdir -p /tmp/artifacts/firmware
               cp "$FIRMWARE_BIN" /tmp/artifacts/firmware/firmware.bin
             else
@@ -60,19 +65,10 @@ jobs:
             fi
 
             if [ -n "$FILESYSTEM_BIN" ]; then
-              echo "✅ filesystem.bin found at: $FILESYSTEM_BIN"
+              echo "✅ filesystem image found: $(basename $FILESYSTEM_BIN)"
               cp "$FILESYSTEM_BIN" /tmp/artifacts/firmware/filesystem.bin
             else
-              echo "⚠️  filesystem.bin not found (optional)"
-            fi
-
-            echo "→ Webapp build check:"
-            if [ -d "web/app/dist" ] && [ "$(ls -A web/app/dist 2>/dev/null)" ]; then
-              echo "✅ Webapp successfully built!"
-              mkdir -p /tmp/artifacts/web
-              cp -r web/app/dist /tmp/artifacts/web/
-            else
-              echo "⚠️  web/app/dist folder is missing or empty"
+              echo "⚠️  No filesystem image (spiffs.bin / littlefs.bin) found"
             fi
 
             echo "=== Verification completed ==="

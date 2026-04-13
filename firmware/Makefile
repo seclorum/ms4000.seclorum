@@ -151,13 +151,16 @@ package-assets:
 	$(call success,📦 Packaging firmware assets ...)
 
 package:	package-assets
-	$(call announce,📦 Packaging web+firmware assets to data ...)
+	$(call announce,📦 Packaging web+firmware assets to data/ ...)
 	make -C ../web/app clean
 	make -C ../web/app build
 	make -C ../web/app package
-	$(call success,📦 Packaging web+firmware assets to data ...)
+	$(call success,📦 Packaging web+firmware assets to data/ ...)
 
-assets:	package	uploadfs
+buildfs:
+	$(call announce,📦 Building filesystem.bin from assets in data/ ...)
+
+assets:	package	buildfs
 	$(call announce,📦 Packaginge data assets and uploading ...)
 
 rebuild: clean all
