@@ -177,7 +177,7 @@ help:
 	@echo "	🔄 [ota.mode]             Set device to OTA mode"
 	@echo "	🔄 [reset-device]         Reset device via serial"
 	@echo "	🧹 [clean]                Clean PlatformIO build artifacts"
-	@echo "	🗑️ [clean-environment]    Full environment clean"
+	@echo "	🗑️  [clean-environment]    Full environment clean"
 	@echo "	📦 [package-assets]       Copy assets to data/"
 	@echo "	📦 [package-web]          Build & package web assets"
 	@echo "	📦 [assets]               Alias: package firmware assets"
