@@ -82,7 +82,8 @@ builder-burn:
 			make -C web/app build && \
 			make -C web/app package && \
 			make -C firmware && \
-			make -C firmware flash \
+			make -C firmware flash && \
+			make -C firmware uploadfs \
 		"
 	$(call success,✅ [builder-burn] Firmware built and flashed via Docker)
 
