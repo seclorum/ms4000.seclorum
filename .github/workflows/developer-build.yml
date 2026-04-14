@@ -48,9 +48,6 @@ jobs:
             set -euo pipefail
             cd firmware
 
-            echo "→ Building firmware + filesystem image..."
-            pio run -t buildfs
-
             echo "→ Locating binaries..."
             FIRMWARE_BIN=$(find .pio/build/ -name "firmware.bin" | head -n 1)
             FILESYSTEM_BIN=$(find .pio/build/ -name "*fs.bin" | head -n 1)   # catches spiffs.bin or littlefs.bin
