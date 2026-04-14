@@ -8,18 +8,23 @@
 ifndef BUILDER_NAME
 BUILDER_NAME ?= ms4000-builder
 
-
 # System and Local (.venv) python
 SYS_PYTHON := $(shell which python3)
-# Prefer venv in current dir, fallback to parent dir
-MS4_PYTHON := $(or \
-    $(wildcard $(PWD)/.venv_ms4000/bin/python3), \
-    $(wildcard $(PWD)/../.venv_ms4000/bin/python3) \
-)
-#$(MS4_PYTHON): new-python-environment
 
-# Optional: provide a hard fallback (e.g. system python) if neither exists
-MS4_PYTHON := $(or $(MS4_PYTHON), python3)
+# =============================================================================
+# Python Virtual Environment Detection
+# =============================================================================
+# Always point to the .venv_ms4000 located in the project root ($PROJECT_ROOT)/.venv_ms4000),
+# regardless of whether we are running from the top-level Makefile or from firmware/Makefile.
+
+# Project root is always one level above the firmware/ directory
+PROJECT_ROOT := $(if $(findstring firmware,$(CURDIR)),$(dir $(CURDIR)),$(CURDIR))
+
+MS4_VENV_PYTHON := $(PROJECT_ROOT)/.venv_ms4000/bin/python3
+
+# Use the venv python if it exists, otherwise fall back to system python3
+MS4_PYTHON := $(if $(wildcard $(MS4_VENV_PYTHON)),$(MS4_VENV_PYTHON),python3)
+
 PWD := $(shell pwd)
 USER := $(shell id -u)
 GROUP := $(shell id -g)

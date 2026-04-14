@@ -107,7 +107,7 @@ activate:
 # =============================================================================
 tools:
 	$(call announce,🛠️ [tools] Build the build tools...)
-	which pio || $(call announce,⚠️ [tools] PlatformIO pio not found in PATH)
+	@which pio || $(call announce,⚠️ [tools] PlatformIO pio not found in PATH)
 	make -C tools/esptool-ck
 	$(call success,✅ [tools] Tools built)
 
@@ -205,7 +205,10 @@ help:
 	@echo "	📦 [package] Build firmware package (includes web/app bundle plus magicBitmaps, etc.)"
 	@echo "	✅ [release] MS4000 top-level release build completed"
 	@echo "\n$(CYAN)═════════════════════════════════════════════════════════════════════════════════$(RESET)"
-
+	@echo "(Python found at: $(MS4_PYTHON)"
+	@echo " .. would use $(MS4_VENV_PYTHON) at "
+	@echo " .. project root: $(PROJECT_ROOT) if possible)"
+	@echo "\n$(CYAN)═════════════════════════════════════════════════════════════════════════════════$(RESET)"
 
 # =============================================================================
 # Phony targets (essential for CLion and make correctness)

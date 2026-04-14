@@ -171,6 +171,10 @@ help:
 	@echo "	📁 [uploadfs] Upload LittleFS filesystem"
 	@echo "	✅ [rebuild] (via clean + all)"
 	@echo "\n$(CYAN)═════════════════════════════════════════════════════════════════════════════════$(RESET)"
+	@echo "(Python found at: $(MS4_PYTHON)"
+	@echo " .. would use $(MS4_VENV_PYTHON) at "
+	@echo " .. project root: $(PROJECT_ROOT) if possible)"
+	@echo "\n$(CYAN)═════════════════════════════════════════════════════════════════════════════════$(RESET)"
 
 # =============================================================================
 # Phony targets (important for CLion and correctness)
