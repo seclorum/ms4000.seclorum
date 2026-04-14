@@ -36,11 +36,11 @@ USER builder
 # === Now copy source code (this layer will invalidate most often) ===
 COPY --chown=$UID:$UID ./ ./
 
-# Build steps (these will only re-run if the code above them changed)
-RUN cd firmware/ && make proto && platformio run
-
 # Build webapp
 RUN cd web/app && make deps && make
+
+# Build steps (these will only re-run if the code above them changed)
+RUN cd firmware/ && make 
 
 # Optional: clean up as root if needed (but consider leaving build artifacts if you mount volumes)
 USER root

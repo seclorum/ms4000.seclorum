@@ -58,7 +58,7 @@ define announce
 endef
 
 define success
-    @echo "$(RED) [MS4000-build] $(GREEN)[$$(date '+%Y-%m-%d %H:%M:%S')] ✅ $(1)$(RESET)"
+    @echo "$(RED) [MS4000-build] $(GREEN)[$$(date '+%Y-%m-%d %H:%M:%S')] $(1)$(RESET)"
 endef
 
 define warning

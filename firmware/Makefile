@@ -6,10 +6,19 @@
 include ../environment.ms4
 
 # =============================================================================
+# Phony targets
+# =============================================================================
+.PHONY: all build-firmware flash burn monitor proto proto-clean copy-libs \
+		python-reqs activate ota ota.mode reset-device clean clean-environment \
+		package-assets package-web clean-data package assets build-filesystem uploadfs \
+		rebuild help
+
+# =============================================================================
 # Default target
 # =============================================================================
-all: clean copy-libs proto package build-filesystem build-firmware flash 
+all: package build-filesystem build-firmware
 	$(call success,✅ [all] Firmware full cycle completed)
+	find .pio/build/ms4000 -name "*.bin" -exec ls -alF {} \;
 
 # =============================================================================
 # Core Build Targets
@@ -19,9 +28,9 @@ build-firmware:
 	pio run --upload-port $(MS4_PORT)
 	$(call success,✅ [build-firmware] Firmware built successfully)
 
-flash: .pio/build/ms4000/firmware.bin
+flash: build-firmware
 	$(call announce,⚡ [flash] Flash firmware at $(MS4_FLASH_BAUD) baud on $(MS4_PORT)...)
-	pio run && ../tools/esptool-ck/esptool -vv -cd ck -cb $(MS4_FLASH_BAUD) -cp $(MS4_PORT) -cf .pio/build/ms4000/firmware.bin
+	../tools/esptool-ck/esptool -vv -cd ck -cb $(MS4_FLASH_BAUD) -cp $(MS4_PORT) -cf .pio/build/ms4000/firmware.bin
 	$(call success,✅ [flash] Firmware flashed successfully)
 
 burn:
@@ -67,7 +76,7 @@ python-reqs:
 activate:
 	$(call announce,🔌 [activate] Activation instructions...)
 	@echo "$(GREEN)Run:$(RESET)"
-	@echo "$(CYAN)	 source ../.venv_ms4000/bin/activate$(RESET)"
+	@echo "$(CYAN)	source ../.venv_ms4000/bin/activate$(RESET)"
 
 # =============================================================================
 # OTA & Reset
@@ -97,9 +106,12 @@ clean:
 
 clean-environment: proto-clean
 	$(call announce,🗑️ [clean-environment] Full environment clean...)
-	rm -rf .pioenvs .piolibdeps .venv_ms4000
+	rm -rf .pio .pioenvs .piolibdeps .venv_ms4000
 	$(call success,✅ [clean-environment] Environment cleaned)
 
+# =============================================================================
+# Assets & Packaging
+# =============================================================================
 package-assets:
 	$(call announce,📦 [package-assets] Package firmware assets [.magicBitmaps/etc.] ...)
 	mkdir -p data/
@@ -118,17 +130,22 @@ clean-data:
 	rm -rf data/*
 	$(call success,✅ [clean-data] Data directory cleaned)
 
+assets: package-assets
+	$(call announce,📦 [assets] Alias for packaging firmware assets...)
+	$(call success,✅ [assets] Assets packaged (alias used))
+
 package: package-assets package-web
 	$(call success,✅ [package] Package web+firmware assets to data/ completed)
 
-build-filesystem:
-	$(call announce,📦 [build-filesystem] Build filesystem.bin from current contents of data/ ...)
-	(pio run -t buildfs -v)
+build-filesystem: package
+	$(call announce,📦 [build-filesystem] Build littlefs.bin from current contents of data/ ...)
+	pio run -t buildfs -v
 	find .pio/build/ms4000 -name "*.bin" -exec ls -alF {} \;
+	$(call success,✅ [build-filesystem] Filesystem image built)
 
 uploadfs:
-	$(call announce,📁 [uploadfs] Uploade LittleFS filesystem...)
-	(pio run -t uploadfs -v || ../tools/esptool-ck/esptool -vv -cd ck -cb 921600 -cp /dev/ttyUSB0 -ca 200000 -cf .pio/build/ms4000/littlefs.bin)
+	$(call announce,📁 [uploadfs] Upload littlefs.bin filesystem...)
+	pio run -t uploadfs -v || ../tools/esptool-ck/esptool -vv -cd ck -cb 921600 -cp /dev/ttyUSB0 -ca 0x200000 -cf .pio/build/ms4000/littlefs.bin
 	$(call success,✅ [uploadfs] Filesystem uploaded)
 
 rebuild: clean all
@@ -141,47 +158,37 @@ help:
 	@echo "$(WHITE)MS4000 Firmware Makefile Help$(RESET)"
 	@echo "$(CYAN)═════════════════════════════════════════════════════════════════════════════════$(RESET)"
 	@echo ""
-	@echo "$(GREEN)═════════════════════════════════════════════════════════════════════════════════$(RESET)"
-	@echo "Purpose: To build the MagicShifter firmware and assets."
-	@echo "   Note: Also contains targets to integrate a new web/app build."
-	@echo "$(GREEN)═════════════════════════════════════════════════════════════════════════════════$(RESET)"
+	@echo "Purpose: Build MagicShifter firmware, protobufs, assets, and LittleFS image."
+	@echo "         Called from top-level Makefile for full release."
 	@echo ""
 	@echo "Usage: make <target>"
 	@echo ""
-	@echo "	🐍 [all] Firmware full cycle completed"
-	@echo "	🔨 [build-firmware] Build firmware with PlatformIO"
-	@echo "	⚡ [flash] Flash firmware at $(MS4_FLASH_BAUD) baud on $(MS4_PORT)"
-	@echo "	🔥 [burn] PlatformIO upload (burn)"
-	@echo "	📡 [monitor] Start serial monitor at 921600 baud"
-	@echo "	📡 [proto] Generate Nanopb protobufs from ../MS4.proto"
-	@echo "	🧹 [proto-clean] Clean protobuf artifacts"
-	@echo "	📚 [copy-libs] Copy NanoPB library files"
-	@echo "	📦 [python-reqs] Install Python requirements"
-	@echo "	🔌 [activate] Activation instructions"
-	@echo "	📡 [ota] Perform OTA update to proto-jv.local"
-	@echo "	🔄 [ota.mode] Set device to OTA mode"
-	@echo "	🔄 [reset-device] Reset device via serial"
-	@echo "	🧹 [clean] Clean PlatformIO build artifacts"
-	@echo "	🗑️  [clean-environment] Full environment clean"
-	@echo "	📦 [package-assets] Package firmware assets [.magicBitmaps/etc.]"
-	@echo "	📦 [package-web] Package web+firmware assets to data/"
-	@echo "	🗑️  [clean-data] ALL assets cleaned from data/"
-	@echo "	📦 [package] Package web+firmware assets to data/"
-	@echo "	📦 [build-filesystem] Build filesystem.bin from current contents of data/"
-	@echo "	📁 [uploadfs] Upload LittleFS filesystem"
-	@echo "	✅ [rebuild] (via clean + all)"
-	@echo "\n$(CYAN)═════════════════════════════════════════════════════════════════════════════════$(RESET)"
-	@echo "(Python found at: $(MS4_PYTHON)"
-	@echo " .. would use $(MS4_VENV_PYTHON) at "
-	@echo " .. project root: $(PROJECT_ROOT) if possible)"
-	@echo "\n$(CYAN)═════════════════════════════════════════════════════════════════════════════════$(RESET)"
-
-# =============================================================================
-# Phony targets (important for CLion and correctness)
-# =============================================================================
-.PHONY: all build-firmware flash burn monitor proto proto-clean copy-libs \
-		python-reqs activate ota ota.mode reset-device clean clean-environment \
-		package-assets package-web clean-data package build-filesystem uploadfs \
-		rebuild help
+	@echo "	🐍 [all]                  Full cycle: package → build-filesystem → build-firmware"
+	@echo "	🔨 [build-firmware]       Build firmware with PlatformIO"
+	@echo "	⚡ [flash]                Flash firmware using esptool"
+	@echo "	🔥 [burn]                 PlatformIO upload"
+	@echo "	📡 [monitor]              Start serial monitor"
+	@echo "	📡 [proto]                Generate Nanopb protobufs"
+	@echo "	🧹 [proto-clean]          Clean protobuf artifacts"
+	@echo "	📚 [copy-libs]            Copy NanoPB library files"
+	@echo "	📦 [python-reqs]          Install Python requirements"
+	@echo "	🔌 [activate]             Show venv activation command"
+	@echo "	📡 [ota]                  Perform OTA update"
+	@echo "	🔄 [ota.mode]             Set device to OTA mode"
+	@echo "	🔄 [reset-device]         Reset device via serial"
+	@echo "	🧹 [clean]                Clean PlatformIO build artifacts"
+	@echo "	🗑️ [clean-environment]    Full environment clean"
+	@echo "	📦 [package-assets]       Copy assets to data/"
+	@echo "	📦 [package-web]          Build & package web assets"
+	@echo "	📦 [assets]               Alias: package firmware assets"
+	@echo "	📦 [package]              Package everything to data/"
+	@echo "	📦 [build-filesystem]     Build LittleFS image"
+	@echo "	📁 [uploadfs]             Upload LittleFS image"
+	@echo "	✅ [rebuild]              clean + all"
+	@echo ""
+	@echo "$(CYAN)═════════════════════════════════════════════════════════════════════════════════$(RESET)"
+	@echo "Python: $(MS4_PYTHON)"
+	@echo "Project root: $(PROJECT_ROOT)"
+	@echo "$(CYAN)═════════════════════════════════════════════════════════════════════════════════$(RESET)"
 
 # vim: set ts=8 sts=8 sw=8 noet ft=make :
