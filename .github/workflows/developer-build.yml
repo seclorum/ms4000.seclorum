@@ -84,7 +84,7 @@ jobs:
         id: artifact-tree
         with:
           exclude: "node_modules|dist|.git|.husky"
-          path: ./artifacts
+          path: ./
           depth: 3
 
       - name: Print artifacts tree and other binary details
