@@ -16,7 +16,7 @@ include ../environment.ms4
 # =============================================================================
 # Default target
 # =============================================================================
-all: package build-filesystem build-firmware
+all: proto package build-filesystem build-firmware
 	$(call success,✅ [all] Firmware full cycle completed)
 	find .pio/build/ms4000 -name "*.bin" -exec ls -alF {} \;
 
@@ -48,7 +48,7 @@ monitor:
 proto: proto-clean ../MS4.proto
 	$(call announce,📡 [proto] Generate Nanopb protobufs from ../MS4.proto...)
 	@echo "NANOPB_DIR = $(NANOPB_DIR)"
-	cd src/ && ../$(NANOPB_DIR)/generator/protoc --proto_path=../.. ../../MS4.proto \
+	cd src/ && $(NANOPB_DIR)/generator/protoc --proto_path=../.. ../../MS4.proto \
 		-o ./MS4.pb --nanopb_out=-v:./ && \
 		$(MS4_PYTHON) ../../tools/nanopb/generator/nanopb_generator.py ./MS4.pb
 	$(call success,✅ [proto] Protobufs generated successfully)
@@ -145,7 +145,7 @@ build-filesystem: package
 
 uploadfs:
 	$(call announce,📁 [uploadfs] Upload littlefs.bin filesystem...)
-	pio run -t uploadfs -v || ../tools/esptool-ck/esptool -vv -cd ck -cb 921600 -cp /dev/ttyUSB0 -ca 0x200000 -cf .pio/build/ms4000/littlefs.bin
+	pio run -t uploadfs -v || ../tools/esptool-ck/esptool -vv -cd ck -cb 460800 -cp /dev/ttyUSB0 -ca 0x200000 -cf .pio/build/ms4000/littlefs.bin
 	$(call success,✅ [uploadfs] Filesystem uploaded)
 
 rebuild: clean all
