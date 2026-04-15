@@ -39,7 +39,7 @@ jobs:
           cache-to: type=gha,mode=max
 
 
-      - name: Verify build and extract binaries
+      - name: Verify build and extract artifacts
         id: verify
         run: |
           echo "=== Running verification inside container ==="
@@ -69,6 +69,11 @@ jobs:
             else
               echo "⚠️  No filesystem image (spiffs.bin / littlefs.bin) found"
             fi
+
+            echo "web dist:"
+            ls -lah web/app/dist
+            mkdir -p /tmp/artifacts/web/dist
+            cp -R web/app/dist/* /tmp/artifacts/web/dist
 
             echo "=== Verification completed ==="
           '
