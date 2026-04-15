@@ -44,14 +44,10 @@ jobs:
         run: |
           echo "=== Running verification inside container ==="
 
-
-          echo $USER
           mkdir artifacts
-          docker run --rm -v ${{ github.workspace }}/artifacts:/tmp/artifacts ms4000-firmware-builder:latest bash -c '
+          docker run --rm -v ${{ github.workspace }}/artifacts:/tmp/artifacts -u $(id -u):$(id -g) ms4000-firmware-builder:latest bash -c '
             set -euo pipefail
             cd firmware
-
-            echo $USER
 
             echo "→ Locating binaries..."
             FIRMWARE_BIN=$(find .pio/build/ -name "firmware.bin" | head -n 1)
