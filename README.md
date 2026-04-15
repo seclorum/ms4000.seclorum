@@ -8,6 +8,8 @@ https://magicshifter.github.io/ms4000/
 
 Please keep an eye on this page if you've got a MagicShifter, and want to test new features.  We will soon add over-the-air updates and other ways for you to update your MagicShifter, also!
 
+
+
 Here in the github repo, is the source code for the MS4000 - the next-generation version of the MagicShifter Light Synthesizer!  (http://magicshifter.net/)
 
 This is a mono-repo.. This repository contains the Magicshifter OS, built with platformio, and includes assets and tooling to get a MagicShifter firmware built and installed.
