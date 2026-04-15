@@ -88,6 +88,8 @@ void setup() {
 
   // get the web interface started
   msWebServer.start();
+  
+  httpUpdater.setup(msWebServer);  // This adds /update (and /update with POST)
 
   // set up syslog .. we can use UDP syslog if necessary, so that the Serial
   // ports can be available for other things, e.g. MIDI
