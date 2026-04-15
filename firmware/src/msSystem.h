@@ -11,6 +11,8 @@
 #include <ESP8266mDNS.h>
 #include <WiFiClient.h>
 
+#include <ESP8266HTTPUpdateServer.h>
+
 #include <DNSServer.h>
 
 #include <WiFiManager.h> //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
