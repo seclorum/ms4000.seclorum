@@ -2,7 +2,7 @@ name: Build MS4000 Release
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, actions-dev ]
   pull_request:
     branches: [ main, master ]
 
