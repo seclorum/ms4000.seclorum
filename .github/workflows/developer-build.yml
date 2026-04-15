@@ -39,12 +39,13 @@ jobs:
           cache-to: type=gha,mode=max
 
 
-      - name: Verify build and extract binaries
+      - name: Verify build and extract artifacts
         id: verify
         run: |
           echo "=== Running verification inside container ==="
 
-          docker run --rm ms4000-firmware-builder:latest bash -c '
+          mkdir artifacts
+          docker run --rm -v ${{ github.workspace }}/artifacts:/tmp/artifacts -u $(id -u):$(id -g) ms4000-firmware-builder:latest bash -c '
             set -euo pipefail
             cd firmware
 
@@ -69,32 +70,18 @@ jobs:
               echo "⚠️  No filesystem image (spiffs.bin / littlefs.bin) found"
             fi
 
+            cd ..
+
+            echo "web dist:"
+            ls -lah web/app/dist
+            mkdir -p /tmp/artifacts/web/dist
+            cp -R web/app/dist/* /tmp/artifacts/web/dist
+
             echo "=== Verification completed ==="
           '
 
-      - name: Extract artifacts from container
+      - name: Print binary details
         run: |
-          echo "Extracting build artifacts..."
-          CONTAINER_ID=$(docker create ms4000-firmware-builder:latest)
-          mkdir ./artifacts/
-          docker cp $CONTAINER_ID:/tmp/artifacts ./artifacts 2>/dev/null || echo "No artifacts directory"
-          docker rm $CONTAINER_ID
-
-      - name: Produce artifacts tree 
-        uses: jaywcjlove/github-action-folder-tree@main
-        id: artifact-tree
-        with:
-          exclude: "node_modules|dist|.git|.husky"
-          path: ./
-          depth: 5
-
-      - name: Print artifacts tree and other binary details
-        run: |
-          echo "=== Artifact Tree: ==="
-          echo "${{ steps.artifact-tree.outputs.content }}"
-          echo ""
-          echo "=== Build - Full Contents: ==="
-          find ./ -exec ls -alF {} \;
           echo "=== MS4000 Binary Details ==="
           if [ -f ./artifacts/firmware/firmware.bin ]; then
             echo "firmware.bin:"
