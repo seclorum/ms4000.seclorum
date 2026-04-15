@@ -2,7 +2,7 @@
 
 ## BRAND NEW:
 
-Yes, folks, we are back actively developing new firmware updates for the MagicShifter - which will be published, when we get around to it, right here:
+Yes folks - it is 2026, and we are back actively developing new firmware updates for the MagicShifter - which will be published, when we get around to it, right here:
 
 https://magicshifter.github.io/ms4000/
 
